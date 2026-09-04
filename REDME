@@ -1,0 +1,95 @@
+# PO Signal Bot — Bot Telegram de signaux (informatifs)
+
+Bot Telegram asynchrone (aiogram) qui analyse des paires OTC selon 3
+stratégies (M1, M2, M5) basées sur Heikin Ashi, Bollinger Bands, SMA, RSI
+et MACD, puis envoie des **signaux informatifs** dans Telegram.
+
+**Ce bot n'exécute aucun trade.** Il ne fait qu'analyser et notifier.
+
+## ⚠️ Ce que ce projet ne fait PAS
+
+Ce bot ne contient **aucune automatisation de connexion / CAPTCHA**. Il ne
+se connecte pas à ta place sur Pocket Option. Tu dois :
+
+1. Te connecter toi-même, manuellement, dans un navigateur, sur ton compte
+   (démo ou réel).
+2. Récupérer ton `SSID` de session (DevTools → onglet Network → WS → payload
+   d'authentification).
+3. Le coller dans ton fichier `.env` (`PO_SSID=...`).
+
+Vérifie que cet usage respecte les conditions d'utilisation de ta
+plateforme avant de faire tourner le bot en continu — c'est une API non
+officielle (reverse-engineered), comme la plupart des projets communautaires
+équivalents.
+
+## Structure
+
+```
+po-signal-bot/
+├── app/
+│   ├── config.py           # Config via variables d'environnement (pydantic)
+│   ├── logger.py           # Loguru, rotation journalière
+│   ├── models.py           # Candle, Signal (pydantic)
+│   ├── market_data.py      # Client WebSocket (session manuelle, pas de bypass)
+│   ├── bot.py              # Bot Telegram (aiogram) + menu à boutons
+│   ├── indicators/
+│   │   └── ta.py           # Heikin Ashi, Bollinger, SMA, EMA, RSI, MACD
+│   └── strategies/
+│       ├── strategy_1m.py
+│       ├── strategy_2m.py
+│       └── strategy_5m.py  # règles à ajuster (non précisées dans le brief)
+├── main.py
+├── requirements.txt
+├── .env.example
+└── README.md
+```
+
+## Installation (Termux)
+
+```bash
+pkg update && pkg upgrade
+pkg install python git -y
+git clone <ton-repo>
+cd po-signal-bot
+pip install -r requirements.txt --break-system-packages  # si nécessaire
+cp .env.example .env
+nano .env   # renseigne TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS, PO_SSID...
+python main.py
+```
+
+## Installation (Linux/serveur classique)
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# éditer .env
+python main.py
+```
+
+## Configuration (.env)
+
+| Variable | Description |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | Token obtenu via @BotFather |
+| `ALLOWED_CHAT_IDS` | IDs Telegram autorisés à recevoir les signaux |
+| `PO_SSID` | Session récupérée manuellement (voir plus haut) |
+| `PAIRS` | Liste de paires OTC à surveiller |
+| `MIN_PAYOUT` | Payout minimum pour générer un signal (%) |
+| `TIMEFRAMES` | Timeframes actifs par défaut (1,2,5) |
+| `SCAN_INTERVAL_SECONDS` | Fréquence de recalcul des indicateurs |
+
+## Utilisation
+
+1. `/start` dans Telegram → menu avec boutons.
+2. "▶️ Démarrer le scan" active l'analyse en continu.
+3. Active/désactive les timeframes 1/2/5 min individuellement.
+4. Le bot envoie un message formaté dès qu'un signal valide est détecté.
+
+## Avertissement
+
+Le trading d'options binaires est à très haut risque et n'est pas autorisé
+ou est fortement réglementé dans de nombreux pays. Ce projet est fourni à
+titre éducatif/informatif, ne constitue pas un conseil financier, et
+n'automatise aucune prise de position réelle.
